@@ -1,6 +1,7 @@
 # reshadeShaderTogglerOld
-fork of original shadertoggler addon
-forking the upstream repo of a repo you've already forked doesn't work out and making it a new branch didn't work either so I'm doing this convoluted mess
+REST allows rendering effects before shaders but doesn't allow hiding shaders. REST forks shadertoggler which only allows hiding shaders. If you fork REST you can't fork the original as a separate repo, instead you'd have to work in a branch which is a huge pain. So here's a reuploaded mirror in case anyone needs it
+fork of original shadertoggler addon with no changes at this time. Renodx includes the same feature set for the most part so you probably should be looking there instead but I'll leave this available as a mirror
+
 
 Original readme:
 
