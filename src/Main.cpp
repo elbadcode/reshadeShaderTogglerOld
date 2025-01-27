@@ -783,13 +783,34 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 				return FALSE;
 			}
 
-			// We'll pass a nullptr for the module handle so we get the containing process' executable + path. We can't use the reshade's api as we don't have the runtime
+			
+			//otis: We'll pass a nullptr for the module handle so we get the containing process' executable + path. We can't use the reshade's api as we don't have the runtime
 			// and we can't use reshade's handle because under vulkan reshade is stored in a central space and therefore it won't get the folder of the exe (where the reshade dll is located as well).
-			WCHAR buf[MAX_PATH];
-			const std::filesystem::path dllPath = GetModuleFileNameW(nullptr, buf, ARRAYSIZE(buf)) ? buf : std::filesystem::path();		// <installpath>/shadertoggler.addon64
-			const std::filesystem::path basePath = dllPath.parent_path();																// <installpath>
+			
+			// lobo: and here's a fix! tbh I think the comment predated some api changes so we probably can just use that but as an alternative lets just use our own handle
+			// this will write to the install directory for the addon in case the user has specified somewhere different
+			// if you want to specify a unique behavior for vulkan you could check if reshade.dll is in programdata since that is consistent
+			// major caveat, I didn't get this to build due to needing some updates for latest reshade/imgui but I've done this with other reshade addons without issue
+            		wchar_t file_prefix[MAX_PATH] = L"";
+			GetModuleFileNameW(hModule, file_prefix, ARRAYSIZE(file_prefix));
+			const std::filesystem::path dllPath = file_prefix;
+			const std::filesystem::path basePath = dllPath.parent_path();
 			const std::string& hashFileName = HASH_FILE_NAME;
 			g_iniFileName = (basePath / hashFileName).string();																			// <installpath>/shadertoggler.ini
+			reshade::register_event<reshade::addon_event::init_pipeline>(onInitPipeline);
+			reshade::register_event<reshade::addon_event::init_command_list>(onInitCommandList);
+			reshade::register_event<reshade::addon_event::destroy_command_list>(onDestroyCommandList);
+			reshade::register_event<reshade::addon_event::reset_command_list>(onResetCommandList);
+			reshade::register_event<reshade::addon_event::destroy_pipeline>(onDestroyPipeline);
+			reshade::register_event<reshade::addon_event::reshade_overlay>(onReshadeOverlay);
+			reshade::register_event<reshade::addon_event::reshade_present>(onReshadePresent);
+			reshade::register_event<reshade::addon_event::bind_pipeline>(onBindPipeline);
+			reshade::register_event<reshade::addon_event::draw>(onDraw);
+			reshade::register_event<reshade::addon_event::draw_indexed>(onDrawIndexed);
+			reshade::register_event<reshade::addon_event::draw_or_dispatch_indirect>(onDrawOrDispatchIndirect);
+			reshade::register_overlay(nullptr, &displaySettings);
+			loadShaderTogglerIniFile();
+		}																	// <installpath>/shadertoggler.ini
 			reshade::register_event<reshade::addon_event::init_pipeline>(onInitPipeline);
 			reshade::register_event<reshade::addon_event::init_command_list>(onInitCommandList);
 			reshade::register_event<reshade::addon_event::destroy_command_list>(onDestroyCommandList);
